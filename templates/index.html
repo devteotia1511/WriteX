@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>WriteX - Generate & Write</title>
+<link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+</style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="left-header">✍️ WriteX</div>
+        <div class="right-header">
+          <button id="themeToggle">🌓</button>
+        </div>
+    </header>
+
+  <div class="container">
+    <h1><i>Generate and Write..</i></h1>
+    
+    <button class="generate-btn" onclick="fetchTopic()">🎯 Get a Random Topic</button>
+    
+    <div id="topicBox" class="topic-box"></div>
+    
+    <textarea id="writeBox" placeholder="Start writing your thoughts here..." disabled></textarea>
+    
+    <div class="word-count" id="wordCount">Word Count: 0</div>
+    <button id="downloadBtn" class="download-btn" onclick="downloadPDF()" style="display:none;">Download as PDF</button>
+  </div>
+
+<footer class="main-footer"></footer>
+    <div class="footer-links">
+        <a href="https://monkeytype.com" target="_blank" rel="noopener noreferrer">Typing speed</a>
+        <a href="https://inshorts.com/en/read" target="_blank" rel="noopener noreferrer">News Blogs</a>
+        <a href="https://www.geeksforgeeks.org/gd-topics-for-placement/" target="_blank" rel="noopener noreferrer">GD Topics</a>
+    </div>
+    <div class="footer-credit">© 2025 WriteX | Created by <span style="font-family:Arial, Helvetica, sans-serif;">Dev Teotia</span></div>
+</footer>
+
+  <script>
+    let wordLimit = 0;
+
+    function fetchTopic() {
+      fetch('/get-topic')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("topicBox").innerHTML = `
+            <div><strong>📝 </strong> ${data.topic}</div>
+            <div style="padding-top: 5px;"><span style="color: skyblue">Max Words:</span> ${data.limit}</div>
+          `;
+          wordLimit = data.limit;
+          const writeBox = document.getElementById("writeBox");
+          writeBox.disabled = false;
+          writeBox.value = '';
+          writeBox.focus();
+          document.getElementById("wordCount").innerText = "Word Count: 0";
+          document.getElementById("downloadBtn").style.display = 'none';
+        });
+    }
+
+    document.getElementById("writeBox").addEventListener("input", function () {
+      let words = this.value.trim().split(/\s+/);
+      let wordCount = words.filter(w => w.length > 0).length;
+
+      if (wordCount > wordLimit) {
+        this.value = words.slice(0, wordLimit).join(" ");
+        wordCount = wordLimit;
+      }
+
+      document.getElementById("wordCount").innerText = `Word Count: ${wordCount}`;
+
+      // Show download button once 50% of the word limit is reached
+      if (wordCount >= wordLimit / 2) {
+        document.getElementById("downloadBtn").style.display = 'inline-block';
+      } else {
+        document.getElementById("downloadBtn").style.display = 'none';
+      }
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
+
+    function downloadPDF() {
+      const content = document.getElementById("writeBox").value;
+      
+      // Send content to the server to create PDF
+      fetch("/download-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `content=${encodeURIComponent(content)}`
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "writeX_content.pdf";
+        link.click();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+  </script>
+</body>
+</html>
