@@ -1,6 +1,8 @@
-from flask import Flask, render_template, jsonify, request, send_file
+from flask import Flask, render_template, jsonify, request, send_file, url_for
 import random
 from fpdf import FPDF
+
+app = Flask(__name__, static_url_path='/static')
 
 app = Flask(__name__)
 last_topic = None  # Store last generated topic to avoid repetition
